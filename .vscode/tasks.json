@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: Run Local YML",
+      "type": "shell",
+      "command": "go run ./cmd/server",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "APP_ENV": "local",
+          "CONFIG_FILE": "${workspaceFolder}/backend/configs/local.yml"
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Backend: Run Dev YML",
+      "type": "shell",
+      "command": "go run ./cmd/server",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "APP_ENV": "dev",
+          "CONFIG_FILE": "${workspaceFolder}/backend/configs/dev.yml"
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Backend: Run Prod YML",
+      "type": "shell",
+      "command": "go run ./cmd/server",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "APP_ENV": "prod",
+          "CONFIG_FILE": "${workspaceFolder}/backend/configs/prod.yml"
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Admin: npm install",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/front/admin"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Admin: npm run dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "front/admin",
+      "args": ["--", "--host", "0.0.0.0"],
+      "dependsOn": "Admin: npm install",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

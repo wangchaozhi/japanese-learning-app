@@ -1,0 +1,23 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+database:
+  dsn: "host=localhost port=5432 user=japanese_learning password=japanese_learning_password dbname=japanese_learning_app sslmode=disable TimeZone=Asia/Shanghai"
+minio:
+  endpoint: "localhost:9000"
+  accessKey: "japanese_learning"
+  secretKey: "japanese_learning_password"
+  useSSL: false
+  avatarBucket: "japanese-learning-avatars"
+cors:
+  allowOrigins:
+    - "*"
+  allowHeaders:
+    - "Content-Type"
+    - "Authorization"
+  allowMethods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"

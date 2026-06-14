@@ -1,0 +1,20 @@
+.idea/
+.DS_Store
+data/
+
+# GoLand / delve 调试产物
+**/__debug_bin*
+
+# Node / Vite
+front/admin/node_modules/
+front/admin/dist/
+
+# Flutter
+front/mobile/.dart_tool/
+front/mobile/build/
+front/mobile/ios/Flutter/ephemeral/
+front/mobile/macos/Flutter/ephemeral/
+front/mobile/ios/Pods/
+front/mobile/macos/Pods/
+front/mobile/ios/Podfile.lock
+front/mobile/macos/Podfile.lock

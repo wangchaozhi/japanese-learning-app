@@ -162,6 +162,23 @@ macOS/iOS/Windows/Linux/Web: http://127.0.0.1:8080
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080
 ```
 
+Release CI 构建 Android APK 时会通过 `--dart-define` 固定 API 地址。默认值是：
+
+```text
+http://192.168.1.23:8080
+```
+
+如需调整，在 GitHub 仓库变量中设置 `MOBILE_API_BASE_URL`。如果要让 CI 产物使用正式 release 签名，在 GitHub Secrets 中配置：
+
+```text
+ANDROID_KEYSTORE_BASE64
+ANDROID_KEYSTORE_PASSWORD
+ANDROID_KEY_ALIAS
+ANDROID_KEY_PASSWORD
+```
+
+其中 `ANDROID_KEYSTORE_BASE64` 是 `.jks` 文件的 Base64 内容；未配置完整 secrets 时，CI 会回退到 debug 签名，方便继续生成测试 APK。
+
 ## 后端接口
 
 ```text

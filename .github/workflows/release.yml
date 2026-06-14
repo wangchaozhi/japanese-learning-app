@@ -164,17 +164,51 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
+      - name: Configure Android release signing
+        shell: bash
+        working-directory: front/mobile
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${ANDROID_KEYSTORE_BASE64}" && -n "${ANDROID_KEYSTORE_PASSWORD}" && -n "${ANDROID_KEY_ALIAS}" && -n "${ANDROID_KEY_PASSWORD}" ]]; then
+            keystore_path="${PWD}/android/app/release-keystore.jks"
+            printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > "${keystore_path}"
+            {
+              echo "ANDROID_KEYSTORE_PATH=${keystore_path}"
+              echo "ANDROID_KEYSTORE_PASSWORD=${ANDROID_KEYSTORE_PASSWORD}"
+              echo "ANDROID_KEY_ALIAS=${ANDROID_KEY_ALIAS}"
+              echo "ANDROID_KEY_PASSWORD=${ANDROID_KEY_PASSWORD}"
+            } >> "${GITHUB_ENV}"
+            echo "Android release APK will be signed with the configured release keystore."
+          else
+            echo "::warning::Android release signing secrets are incomplete. APK will fall back to the debug signing config."
+          fi
+
       - name: Build Android APK
         working-directory: front/mobile
+        env:
+          MOBILE_API_BASE_URL: ${{ vars.MOBILE_API_BASE_URL || 'http://192.168.1.23:8080' }}
         run: |
+          set -euo pipefail
+          echo "Building Android APK with API_BASE_URL=${MOBILE_API_BASE_URL}"
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --dart-define=API_BASE_URL="${MOBILE_API_BASE_URL}"
 
       - name: Build Flutter web
         working-directory: front/mobile

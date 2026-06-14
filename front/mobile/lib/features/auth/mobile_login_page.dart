@@ -130,26 +130,13 @@ class _MobileLoginPageState extends State<MobileLoginPage> {
         children: [
           const _LoginBackground(),
           SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4, right: 8),
-                child: IconButton(
-                  tooltip: '服务器设置',
-                  onPressed: _openServerSettings,
-                  icon: const Icon(Icons.settings_rounded, color: Color(0xFF166534)),
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 54, 20, 24),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - 46,
+                      minHeight: constraints.maxHeight - 78,
                     ),
                     child: Center(
                       child: ConstrainedBox(
@@ -170,6 +157,22 @@ class _MobileLoginPageState extends State<MobileLoginPage> {
                   ),
                 );
               },
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, right: 8),
+                child: IconButton(
+                  tooltip: '服务器设置',
+                  onPressed: _openServerSettings,
+                  icon: const Icon(
+                    Icons.settings_rounded,
+                    color: Color(0xFF166534),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
+import '../../core/api_config.dart';
 import 'login_storage.dart';
+import 'server_settings_dialog.dart';
 import 'widgets/login_header.dart';
 
 class MobileLoginPage extends StatefulWidget {
@@ -98,6 +100,13 @@ class _MobileLoginPageState extends State<MobileLoginPage> {
     );
   }
 
+  Future<void> _openServerSettings() async {
+    final changed = await showServerSettingsDialog(context);
+    if (!mounted || changed != true) return;
+    setState(() {}); // 刷新，让设置按钮的副标题反映新地址
+    _showMessage('服务器地址已更新为 ${ApiConfig.baseUrl}');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_ready) {
@@ -120,6 +129,19 @@ class _MobileLoginPageState extends State<MobileLoginPage> {
       body: Stack(
         children: [
           const _LoginBackground(),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, right: 8),
+                child: IconButton(
+                  tooltip: '服务器设置',
+                  onPressed: _openServerSettings,
+                  icon: const Icon(Icons.settings_rounded, color: Color(0xFF166534)),
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {

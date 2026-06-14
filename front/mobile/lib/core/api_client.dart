@@ -1,20 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-class ApiClient {
-  static const String _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
+import 'api_config.dart';
 
-  static String get baseUrl {
-    if (_definedBaseUrl.isNotEmpty) {
-      return _definedBaseUrl;
-    }
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
-    }
-    return 'http://127.0.0.1:8080';
-  }
+class ApiClient {
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, dynamic>> post(
     String path,

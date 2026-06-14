@@ -1,6 +1,9 @@
-name: Manual Release
+name: Release
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -21,13 +24,15 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ inputs.tag }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   prepare:
     name: Prepare tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -35,11 +40,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve tag
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 手动触发用输入的 tag；push tag 触发用 ref 名称。
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "Resolved tag: ${TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
       - name: Validate tag
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${{ inputs.tag }}"
           if [[ ! "$TAG" =~ ^v?[0-9]+(\.[0-9]+){1,2}([.-][0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid tag: $TAG"
             echo "Recommended format: v1.0.0"
@@ -50,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${{ inputs.tag }}"
+          # push tag 触发时 tag 已存在，这里只在手动触发缺 tag 时补建。
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin "refs/tags/${TAG}:refs/tags/${TAG}" || true
@@ -71,7 +90,7 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -94,11 +113,11 @@ jobs:
           )
           for target in "${targets[@]}"; do
             read -r goos goarch output <<< "$target"
-            out_dir="../dist/backend/flutter-admin-go-${{ inputs.tag }}-${goos}-${goarch}"
+            out_dir="../dist/backend/flutter-admin-go-${{ needs.prepare.outputs.tag }}-${goos}-${goarch}"
             mkdir -p "$out_dir"
             GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "$out_dir/$output" ./cmd/server
             cp ../README.md "$out_dir/"
-            tar -czf "../dist/flutter-admin-go-${{ inputs.tag }}-backend-${goos}-${goarch}.tar.gz" -C "../dist/backend" "$(basename "$out_dir")"
+            tar -czf "../dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-backend-${goos}-${goarch}.tar.gz" -C "../dist/backend" "$(basename "$out_dir")"
           done
 
       - name: Setup Node.js
@@ -118,7 +137,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tar -czf "dist/flutter-admin-go-${{ inputs.tag }}-admin-web.tar.gz" -C front/admin/dist .
+          tar -czf "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-admin-web.tar.gz" -C front/admin/dist .
 
       - name: Upload backend and admin assets
         uses: actions/upload-artifact@v4
@@ -138,7 +157,7 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Install Linux desktop dependencies
         run: |
@@ -172,9 +191,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp front/mobile/build/app/outputs/flutter-apk/app-release.apk "dist/flutter-admin-go-${{ inputs.tag }}-mobile-android-release.apk"
-          tar -czf "dist/flutter-admin-go-${{ inputs.tag }}-mobile-web.tar.gz" -C front/mobile/build/web .
-          tar -czf "dist/flutter-admin-go-${{ inputs.tag }}-mobile-linux-x64.tar.gz" -C front/mobile/build/linux/x64/release/bundle .
+          cp front/mobile/build/app/outputs/flutter-apk/app-release.apk "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-mobile-android-release.apk"
+          tar -czf "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-mobile-web.tar.gz" -C front/mobile/build/web .
+          tar -czf "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-mobile-linux-x64.tar.gz" -C front/mobile/build/linux/x64/release/bundle .
 
       - name: Upload Flutter Android, web and Linux assets
         uses: actions/upload-artifact@v4
@@ -193,7 +212,7 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -212,7 +231,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path front/mobile/build/windows/x64/runner/Release/* -DestinationPath "dist/flutter-admin-go-${{ inputs.tag }}-mobile-windows-x64.zip" -Force
+          Compress-Archive -Path front/mobile/build/windows/x64/runner/Release/* -DestinationPath "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-mobile-windows-x64.zip" -Force
 
       - name: Upload Flutter Windows asset
         uses: actions/upload-artifact@v4
@@ -231,7 +250,7 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.prepare.outputs.tag }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -256,7 +275,7 @@ jobs:
             echo "No macOS .app bundle found"
             exit 1
           fi
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/flutter-admin-go-${{ inputs.tag }}-mobile-macos.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/flutter-admin-go-${{ needs.prepare.outputs.tag }}-mobile-macos.zip"
 
       - name: Upload Flutter macOS asset
         uses: actions/upload-artifact@v4
@@ -305,9 +324,9 @@ jobs:
       - name: Create release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag }}
-          name: ${{ inputs.release_name || inputs.tag }}
-          prerelease: ${{ inputs.prerelease }}
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ inputs.release_name || needs.prepare.outputs.tag }}
+          prerelease: ${{ inputs.prerelease || false }}
           generate_release_notes: true
           overwrite_files: true
           fail_on_unmatched_files: true
